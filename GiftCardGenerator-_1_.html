@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Card Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;7text/markdown700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            /* Removed overflow: hidden; to enable scrolling */
+        }
+        /* Custom animation for bouncing effect */
+        @keyframes bounce-slow {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+        .animate-bounce-slow {
+            animation: bounce-slow 1.5s infinite ease-in-out;
+        }
+        /* Custom animation for pulse effect */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        .animate-pulse-custom {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        /* Loader spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        /* Smaller loader for reCAPTCHA */
+        .loader-sm {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 28px; /* Adjusted size to fit h-8 w-8 container */
+            height: 28px; /* Adjusted size to fit h-8 w-8 container */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Styles for animated dollar signs */
+        #dollarSignBackground {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Allows clicks to pass through to elements below */
+            z-index: 1; /* Above body background, below main content */
+            overflow: hidden; /* Crucial to prevent scrollbars from dollar signs */
+        }
+
+        .dollar-sign {
+            position: absolute;
+            color: #4CAF50; /* Green dollar sign color */
+            font-size: 2rem; /* Default size, will be randomized */
+            opacity: 0; /* Starts invisible */
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            animation-fill-mode: forwards;
+            cursor: pointer; /* Indicate it's clickable */
+            pointer-events: auto; /* Re-enable pointer events for clicking */
+        }
+
+        @keyframes floatDollar {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8; /* Fade in */
+            }
+            90% {
+                opacity: 0.8; /* Stay opaque */
+            }
+            100% {
+                transform: translateY(-100px) translateX(0); /* Go slightly above viewport */
+                opacity: 0; /* Fade out */
+            }
+        }
+
+        /* Style for the money counter */
+        #moneyCounter {
+            position: fixed; /* Changed to fixed for viewport positioning */
+            top: 1rem;
+            right: 1rem; /* Back to top right */
+            background-color: #1a56db; /* Darker blue background */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            font-size: 1.25rem;
+            z-index: 100; /* Ensure it's always on top of everything */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            white-space: nowrap; /* Prevent wrapping */
+        }
+
+        /* Styles for introductory text */
+        .intro-text {
+            position: fixed;
+            top: 4.5rem; /* Position below the counter */
+            right: 1rem; /* Align with counter */
+            color: #3b82f6; /* Blue text color */
+            font-weight: 600;
+            font-size: 1rem;
+            opacity: 0; /* Start hidden */
+            animation: fadeInOut 5s forwards; /* Fade in and out over 5 seconds */
+            text-align: right; /* Align text to the right */
+            white-space: nowrap; /* Prevent wrapping */
+            z-index: 99; /* Below counter, above main content */
+        }
+
+        #introText2 {
+            top: 6rem; /* Position below the first intro text */
+        }
+
+        /* New style for the "You hit $100!" message */
+        #cashOutReadyMessage {
+            position: fixed;
+            top: 4.5rem; /* Position below the counter */
+            right: 1rem; /* Align with counter */
+            color: #22c55e; /* Green text color */
+            font-weight: 700;
+            font-size: 1.1rem;
+            z-index: 99;
+            text-align: right;
+            white-space: nowrap;
+            opacity: 0; /* Start hidden, will be shown by JS */
+            transition: opacity 0.5s ease-in-out; /* Smooth transition for opacity */
+        }
+
+        /* Style for the cash out section */
+        #cashOutSection {
+            background-color: #e0f2fe; /* Light blue */
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid #90cdf4; /* Medium blue border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        #cashOutSection label {
+            font-weight: 600;
+            color: #2b6cb0; /* Darker blue for labels */
+        }
+
+        #cashOutSection input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+
+        #cashOutSection input[type="text"] {
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Style for the new cash out code display section */
+        #cashOutCodeDisplaySection {
+            background-color: #e0f2fe; /* Light blue */
+            padding: 2rem;
+            border-radius: 1rem;
+            border: 2px solid #90cdf4; /* Medium blue border */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Money Counter -->
+    <div id="moneyCounter">$0.00</div>
+
+    <!-- Introductory Text -->
+    <div id="introText1" class="intro-text">Click the dollar signs in the background to earn cash!</div>
+    <div id="introText2" class="intro-text">Earn 100 Cash to cash out!</div>
+
+    <!-- Cash Out Ready Message -->
+    <div id="cashOutReadyMessage">You hit $100! Great! Click the counter to cash out!</div>
+
+    <!-- Animated Dollar Sign Background -->
+    <div id="dollarSignBackground"></div>
+
+    <div id="mainGenerator" class="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center border border-blue-200 z-10 relative">
+        <h1 class="text-3xl font-bold text-blue-700 mb-4">
+            <span class="inline-block animate-bounce-slow">💲</span> Gift Card Generator <span class="inline-block animate-bounce-slow">💲</span>
+        </h1>
+
+        <!-- Global Progress Bar -->
+        <div id="globalProgressBarContainer" class="w-full bg-gray-200 rounded-full h-2.5 mb-6 hidden">
+            <div id="globalProgressBarFill" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 0%;"></div>
+        </div>
+
+        <div class="mb-6" id="selectionSection">
+            <label for="giftCardType" class="block text-gray-700 text-sm font-medium mb-2">Select Gift Card Type:</label>
+            <select id="giftCardType" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+                <option value="amazon">Amazon</option>
+                <option value="nintendo">Nintendo eShop</option>
+                <option value="roblox">Roblox</option>
+                <option value="recroom">Rec Room</option>
+                <option value="googleplay">Google Play</option>
+                <option value="xbox">Xbox</option>
+                <option value="playstation">PlayStation Store</option>
+                <option value="steam">Steam</option>
+                <option value="spotify">Spotify</option>
+                <option value="starbucks">Starbucks</option>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label for="giftCardAmount" class="block text-gray-700 text-sm font-medium mb-2">Select Amount:</label>
+            <select id="giftCardAmount" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+                <option value="250">$250</option>
+                <option value="500">$500</option>
+                <option value="750">$750</option>
+                <option value="1000">$1,000</option>
+                <option value="2000">$2,000</option>
+                <option value="3000">$3,000</option>
+                <option value="4000">$4,000</option>
+                <option value="5000">$5,000</option>
+                <option value="6000">$6,000</option>
+                <option value="7000">$7,000</option>
+                <option value="8000">$8,000</option>
+                <option value="9000">$9,000</option>
+                <option value="10000">$10,000</option>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label for="usernameEmail" class="block text-gray-700 text-sm font-medium mb-2">Username/Email:</label>
+            <input type="text" id="usernameEmail" placeholder="Enter your username or email" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+            <p id="validationMessage" class="text-red-500 text-sm mt-2 hidden">Please enter a username or email.</p>
+        </div>
+
+        <button id="generateButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full mb-6">
+            Generate Code!
+        </button>
+
+        <!-- User Check Section -->
+        <div id="userCheckSection" class="hidden flex flex-col items-center justify-center p-5 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+            <div id="userCheckLoader" class="loader mb-4"></div>
+            <svg id="userCheckSuccessIcon" class="w-12 h-12 text-green-500 mb-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p id="userCheckMessage" class="text-blue-700 text-lg">Checking user...</p>
+        </div>
+
+        <!-- Automatic Verification Section -->
+        <div id="autoVerifySection" class="hidden flex flex-col items-center justify-center p-5 bg-yellow-50 rounded-lg border border-yellow-200 mb-6">
+            <div id="autoVerifyLoader" class="loader mb-4"></div>
+            <svg id="autoVerifyFailIcon" class="w-12 h-12 text-red-500 mb-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p id="autoVerifyMessage" class="text-yellow-700 text-lg">Running Automatic Human Verification...</p>
+        </div>
+
+        <!-- Fake reCAPTCHA Section -->
+        <div id="reCaptchaSection" class="hidden flex items-center justify-center p-5 bg-gray-50 rounded-lg border border-gray-200 mb-6 w-full">
+            <div class="flex items-center justify-between w-full max-w-xs">
+                <div class="flex items-center space-x-2">
+                    <!-- reCAPTCHA Icon (Image) - Corrected src -->
+                    <img src="uploaded:images__1_-removebg-preview.png-f43ffb3c-756f-43c1-ba56-df6d632fa10c" alt="reCAPTCHA icon" class="w-8 h-8">
+                    <p class="text-lg text-gray-700">I'm not a robot</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="reCaptchaCheckbox" class="form-checkbox h-8 w-8 text-blue-600 rounded-md">
+                    <div id="reCaptchaStatus" class="w-8 h-8 flex items-center justify-center">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Manual Verification Info Section -->
+        <div id="manualVerifyInfoSection" class="hidden flex flex-col items-center justify-center p-5 bg-orange-100 rounded-lg border border-orange-300 mb-6">
+            <svg class="w-12 h-12 text-orange-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-orange-700 text-lg">Please manually verify that you are human.</p>
+        </div>
+
+        <!-- Manual Verification Section - Updated background color -->
+        <div id="manualVerifySection" class="hidden bg-blue-100 p-5 rounded-lg border border-blue-300 text-center">
+            <p class="text-xl font-bold text-blue-800 mb-4 animate-pulse-custom">Automatic Human Verification failed.</p>
+            <p class="text-gray-700 mb-4">Please complete one of the offers below to prove you are a human.</p>
+            <div id="offerButtonsContainer" class="space-y-4">
+                </div>
+        </div>
+
+        <!-- Waiting for Survey Completion Section (New) -->
+        <div id="waitingForSurveySection" class="hidden flex flex-col items-center justify-center p-5 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+            <div class="loader mb-4"></div>
+            <p class="text-blue-700 text-lg mb-4">Waiting for survey completion...</p>
+            <button id="returnFromAmazonOfferButton" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                Return and do another survey
+            </button>
+        </div>
+
+        <!-- Survey Section -->
+        <div id="surveySection" class="hidden bg-blue-100 p-5 rounded-lg border border-blue-300 text-left">
+            <p class="text-xl font-bold text-blue-800 mb-2 text-center">Please complete this quick survey:</p>
+            <p class="text-sm text-gray-600 mb-4 text-center">
+                Please be aware that the information gathered through this survey is for internal purposes only. To ensure the integrity of our process and the fairness of our offers, we kindly request that you do not discuss the survey questions or your responses with others. Your cooperation helps us maintain a secure and equitable experience for all participants.
+            </p>
+
+            <div class="mb-4">
+                <label for="surveyName" class="block text-gray-700 text-sm font-medium mb-2">1. What is your real name?</label>
+                <input type="text" id="surveyName" placeholder="Enter your name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="surveyNameValidation" class="text-red-500 text-sm mt-2 hidden">Please enter your name.</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="surveyEmail" class="block text-gray-700 text-sm font-medium mb-2">2. What is your email? (Has to be Google)</label>
+                <input type="email" id="surveyEmail" placeholder="e.g., yourname@gmail.com" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="surveyEmailValidation" class="text-red-500 text-sm mt-2 hidden">Please enter a valid Gmail address (e.g., @gmail.com).</p>
+            </div>
+
+            <div class="mb-6">
+                <label for="surveyLocation" class="block text-gray-700 text-sm font-medium mb-2">3. Where do you live?</label>
+                <input type="text" id="surveyLocation" placeholder="Enter your city/state/country" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p id="surveyLocationValidation" class="text-red-500 text-sm mt-2 hidden">Please enter a location.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">4. What is your current employment status?</label>
+                <div id="employmentStatusOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="employmentStatus" value="Full-time">
+                        <span class="ml-2 text-gray-700">Full-time</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="employmentStatus" value="Part-time">
+                        <span class="ml-2 text-gray-700">Part-time</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="employmentStatus" value="Student">
+                        <span class="ml-2 text-gray-700">Student</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="employmentStatus" value="Unemployed">
+                        <span class="ml-2 text-gray-700">Unemployed</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="employmentStatus" value="Retired">
+                        <span class="ml-2 text-gray-700">Retired</span>
+                    </label>
+                </div>
+                <p id="employmentStatusValidation" class="text-red-500 text-sm mt-2 hidden">Please select your employment status.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">5. How often do you work?</label>
+                <div id="workFrequencyOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workFrequency" value="Daily">
+                        <span class="ml-2 text-gray-700">Daily</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workFrequency" value="Weekly">
+                        <span class="ml-2 text-gray-700">Weekly</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workFrequency" value="Monthly">
+                        <span class="ml-2 text-gray-700">Monthly</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workFrequency" value="Rarely">
+                        <span class="ml-2 text-gray-700">Rarely</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workFrequency" value="Never">
+                        <span class="ml-2 text-gray-700">Never</span>
+                    </label>
+                </div>
+                <p id="workFrequencyValidation" class="text-red-500 text-sm mt-2 hidden">Please select how often you work.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">6. Do you work from home or in a business?</label>
+                <div id="workLocationOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workLocation" value="From home">
+                        <span class="ml-2 text-gray-700">From home</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workLocation" value="In a business">
+                        <span class="ml-2 text-gray-700">In a business</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workLocation" value="Hybrid">
+                        <span class="ml-2 text-gray-700">Hybrid</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="workLocation" value="Not applicable">
+                        <span class="ml-2 text-gray-700">Not applicable</span>
+                    </label>
+                </div>
+                <p id="workLocationValidation" class="text-red-500 text-sm mt-2 hidden">Please select your work location.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">7. What is your current household income?</label>
+                <div id="householdIncomeOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="householdIncome" value="< $25k">
+                        <span class="ml-2 text-gray-700">&lt; $25k</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="householdIncome" value="$25k-$50k">
+                        <span class="ml-2 text-gray-700">$25k-$50k</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="householdIncome" value="$50k-$100k">
+                        <span class="ml-2 text-gray-700">$50k-$100k</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="householdIncome" value="$100k-$200k">
+                        <span class="ml-2 text-gray-700">$100k-$200k</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="householdIncome" value="> $200k">
+                        <span class="ml-2 text-gray-700">&gt; $200k</span>
+                    </label>
+                </div>
+                <p id="householdIncomeValidation" class="text-red-500 text-sm mt-2 hidden">Please select your household income.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">8. How many people live in your house?</label>
+                <div id="peopleInHouseOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="peopleInHouse" value="1">
+                        <span class="ml-2 text-gray-700">1</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="peopleInHouse" value="2">
+                        <span class="ml-2 text-gray-700">2</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="peopleInHouse" value="3">
+                        <span class="ml-2 text-gray-700">3</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="peopleInHouse" value="4">
+                        <span class="ml-2 text-gray-700">4</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="peopleInHouse" value="5+">
+                        <span class="ml-2 text-gray-700">5+</span>
+                    </label>
+                </div>
+                <p id="peopleInHouseValidation" class="text-red-500 text-sm mt-2 hidden">Please select the number of people in your house.</p>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-medium mb-2">9. How old are you?</label>
+                <div id="ageOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="Under 18">
+                        <span class="ml-2 text-gray-700">Under 18</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="18-24">
+                        <span class="ml-2 text-gray-700">18-24</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="25-34">
+                        <span class="ml-2 text-gray-700">25-34</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="35-44">
+                        <span class="ml-2 text-gray-700">35-44</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="45-54">
+                        <span class="ml-2 text-gray-700">45-54</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="55-64">
+                        <span class="ml-2 text-gray-700">55-64</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="age" value="65+">
+                        <span class="ml-2 text-gray-700">65+</span>
+                    </label>
+                </div>
+                <p id="ageValidation" class="text-red-500 text-sm mt-2 hidden">Please select your age.</p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-medium mb-2">10. What job are you currently working?</label>
+                <div id="jobOptions" class="flex flex-wrap gap-2">
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Office Worker">
+                        <span class="ml-2 text-gray-700">Office Worker</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Retail/Service">
+                        <span class="ml-2 text-gray-700">Retail/Service</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Healthcare">
+                        <span class="ml-2 text-gray-700">Healthcare</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Education">
+                        <span class="ml-2 text-gray-700">Education</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Tech">
+                        <span class="ml-2 text-gray-700">Tech</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Other">
+                        <span class="ml-2 text-gray-700">Other</span>
+                    </label>
+                    <label class="inline-flex items-center">
+                        <input type="radio" class="form-radio text-blue-600" name="job" value="Not applicable">
+                        <span class="ml-2 text-gray-700">Not applicable</span>
+                    </label>
+                </div>
+                <p id="jobValidation" class="text-red-500 text-sm mt-2 hidden">Please select your current job.</p>
+            </div>
+            <div class="mb-6 mt-4">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="surveyAgreementCheckbox" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                    <span class="ml-2 text-gray-700">I agree to not discuss the survey with others.</span>
+                </label>
+                <p id="surveyAgreementValidation" class="text-red-500 text-sm mt-2 hidden">Please agree to the terms to proceed.</p>
+            </div>
+
+            <button id="submitSurveyButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full">
+                Submit Survey
+            </button>
+            <button id="returnFromSurveyButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full">
+                Return and do another survey
+            </button>
+        </div>
+
+        <div id="operaGxLoadingSection" class="hidden flex flex-col items-center justify-center p-5 bg-blue-50 rounded-lg border border-blue-200 mb-6">
+            <div class="loader mb-4"></div>
+            <p id="operaGxLoadingMessage" class="text-blue-700 text-lg">Initiating Opera GX Browser download...</p>
+            <button id="returnFromOperaGxButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                Return and do another survey
+            </button>
+        </div>
+
+        <div id="loadingSection" class="hidden flex flex-col items-center justify-center p-5">
+            <div class="loader mb-4"></div>
+            <p id="generatingMessage" class="text-blue-500 text-lg">Generating...</p>
+        </div>
+
+        <div id="resultBox" class="hidden bg-green-100 p-5 rounded-lg border border-green-300 min-h-[100px] flex flex-col items-center justify-center text-gray-800 text-lg font-mono break-words mt-6">
+            <p id="generatedCode" class="text-green-700 font-bold text-2xl"></p>
+            <p id="resultMessage" class="text-gray-600 text-sm mt-2"></p>
+            <button id="generateAnotherButton" class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                Generate Another Card
+            </button>
+        </div>
+    </div>
+
+    <!-- Cash Out Section -->
+    <div id="cashOutSection" class="hidden bg-blue-100 p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-blue-200 z-10 relative">
+        <h2 class="text-3xl font-bold text-blue-700 mb-4">Cash Out Your Earnings!</h2>
+        <p class="text-gray-700 mb-6">Select your preferred cash out method:</p>
+
+        <div class="mb-4">
+            <label class="block text-gray-700 text-sm font-medium mb-2">Cash Out Method:</label>
+            <div class="flex flex-wrap gap-4 justify-center">
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio text-blue-600" name="cashOutMethod" value="paypal">
+                    <span class="ml-2 text-gray-700">PayPal</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio text-blue-600" name="cashOutMethod" value="visa">
+                    <span class="ml-2 text-gray-700">Visa Gift Card</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="radio" class="form-radio text-blue-600" name="cashOutMethod" value="mastercard">
+                    <span class="ml-2 text-gray-700">Mastercard Gift Card</span>
+                </label>
+            </div>
+            <p id="cashOutMethodValidation" class="text-red-500 text-sm mt-2 hidden">Please select a cash out method.</p>
+        </div>
+
+        <div class="mb-6">
+            <label for="bankAccountNumber" class="block text-gray-700 text-sm font-medium mb-2">Bank Account Number:</label>
+            <input type="text" id="bankAccountNumber" placeholder="Enter your bank account number" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out">
+            <p id="bankAccountValidation" class="text-red-500 text-sm mt-2 hidden">Please enter a bank account number.</p>
+        </div>
+
+        <button id="processCashOutButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full">
+            Cash Out!
+        </button>
+    </div>
+
+    <!-- New Cash Out Code Display Section -->
+    <div id="cashOutCodeDisplaySection" class="hidden bg-blue-100 p-8 rounded-xl shadow-lg max-w-md w-full text-center border border-blue-200 z-10 relative mt-6">
+        <h2 class="text-3xl font-bold text-blue-700 mb-4">Your Cash Out Code</h2>
+        <p id="cashOutGeneratedCode" class="text-green-700 font-bold text-2xl mb-2"></p>
+        <p id="cashOutResultMessage" class="text-gray-600 text-sm mb-4"></p>
+        <button id="generateAnotherCashOutCodeButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full">
+            Generate Another $100 Code
+        </button>
+        <button id="backToGeneratorFromCodeDisplayButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 w-full">
+            Back to Generator
+        </button>
+    </div>
+
+
+    <script>
+        let currentProgressBarInterval; // Global variable to hold the interval ID
+        let currentMoney = 0.00; // Initialize money counter
+        let selectedCashOutMethod = ''; // To store the chosen method for repeated cash-outs
+
+        // Declare all elements that will be used globally
+        let moneyCounterDisplay;
+        let generateButton;
+        let giftCardType;
+        let giftCardAmount;
+        let usernameEmailInput;
+        let validationMessage;
+        let selectionSection;
+        let mainGenerator;
+        let reCaptchaSection;
+        let reCaptchaCheckbox;
+        let reCaptchaStatus;
+        let userCheckSection;
+        let userCheckLoader;
+        let userCheckSuccessIcon;
+        let userCheckMessage;
+        let autoVerifySection;
+        let autoVerifyLoader;
+        let autoVerifyFailIcon;
+        let autoVerifyMessage;
+        let globalProgressBarContainer;
+        let globalProgressBarFill;
+        let manualVerifyInfoSection;
+        let manualVerifySection;
+        let offerButtonsContainer;
+        let surveySection;
+        let surveyNameInput;
+        let surveyNameValidation;
+        let surveyEmailInput;
+        let surveyEmailValidation;
+        let surveyLocationInput;
+        let surveyLocationValidation;
+        let submitSurveyButton;
+        let operaGxLoadingSection;
+        let operaGxLoadingMessage;
+        let loadingSection;
+        let generatingMessage;
+        let resultBox;
+        let generatedCodeDisplay;
+        let resultMessageDisplay;
+        let generateAnotherButton;
+        let waitingForSurveySection;
+        let returnFromAmazonOfferButton;
+        let returnFromSurveyButton;
+        let returnFromOperaGxButton;
+        let dollarSignBackground;
+        let introText1;
+        let introText2;
+        let cashOutReadyMessage;
+        let cashOutSection;
+        let cashOutMethodRadios; // This will be a NodeList, not a single element
+        let bankAccountNumberInput;
+        let cashOutMethodValidation;
+        let bankAccountValidation;
+        let processCashOutButton;
+        let cashOutCodeDisplaySection;
+        let cashOutGeneratedCode;
+        let cashOutResultMessage;
+        let generateAnotherCashOutCodeButton;
+        let backToGeneratorFromCodeDisplayButton;
+        let surveyAgreementCheckbox; // Added this missing declaration
+        let surveyAgreementValidation; // Added this missing declaration
+
+
+        // Fixed offers with estimated wait times and URLs
+        const fixedOffers = [
+            { text: "Complete a quick survey to unlock your prize!", time: "<1 min", type: "survey" },
+            { text: "Download the Opera GX Gaming browser!", time: "2 mins", type: "opera_gx" },
+            { text: "Enter to win a $750 Amazon gift card!", time: "<1 min", type: "external_amazon", url: "https://www.retailproductsusa.com/?Flow=6b51d955-0748-462e-9eb5-0ccdd7eceb37&isPrePop=true&RBC=1&reward=amazon750v2&o=211537&affsecid=5114142428&subaff1=244176&subaff2=200222&subaff3=241830&aff_pixel=186&subaff4=amazon750v2-cpa2-15152&DVID=&bckm=1" },
+            { text: "Enter your email for a chance to win $500!", time: "<1 min", type: "external_email_500", url: "https://www.uplevelrewards.com/?Flow=6b51d955-0748-462e-9eb5-0ccdd7eceb37&isPrePop=true&RBC=1&reward=dollartree500&o=218145&affsecid=5114147138&subaff1=61335&subaff2=208198&subaff3=259378&aff_pixel=&subaff4=dollartree500-default-39876&DVID=#s&bckm=1&bckm=1" }
+        ];
+
+        // Function to animate the global progress bar
+        function animateProgressBar(startWidth, targetWidth, duration, isJittering = false) {
+            clearInterval(currentProgressBarInterval); // Clear any existing animation
+            const startTime = Date.now();
+            let currentProgress = startWidth;
+
+            if (globalProgressBarContainer) { // Added null check
+                globalProgressBarContainer.classList.remove('hidden'); // Ensure it's visible
+            }
+
+
+            currentProgressBarInterval = setInterval(() => {
+                const elapsed = Date.now() - startTime;
+                let percentageComplete = elapsed / duration;
+
+                if (isJittering) {
+                    // Jittering logic: overall progress towards targetWidth, but with random fluctuations
+                    let baseProgress = startWidth + (targetWidth - startWidth) * percentageComplete;
+                    let jitterOffset = (Math.random() - 0.5) * 8; // Jitter by +/- 4%
+                    currentProgress = baseProgress + jitterOffset;
+                    currentProgress = Math.max(0, Math.min(100, currentProgress)); // Keep within 0-100 bounds
+
+                    if (percentageComplete >= 1) { // If duration is complete for jittering
+                        clearInterval(currentProgressBarInterval);
+                        if (globalProgressBarFill) { // Added null check
+                            globalProgressBarFill.style.width = `${targetWidth}%`; // Snap to the intended stop point
+                        }
+                    }
+                } else {
+                    // Smooth progress
+                    currentProgress = startWidth + (targetWidth - startWidth) * percentageComplete;
+                    currentProgress = Math.max(0, Math.min(100, currentProgress)); // Ensure bounds
+
+                    if (percentageComplete >= 1) {
+                        clearInterval(currentProgressBarInterval);
+                        if (globalProgressBarFill) { // Added null check
+                            globalProgressBarFill.style.width = `${targetWidth}%`;
+                        }
+                        // The calling function will handle hiding the bar if needed (e.g., after user found)
+                    }
+                }
+                if (globalProgressBarFill) { // Added null check
+                    globalProgressBarFill.style.width = `${currentProgress}%`;
+                }
+            }, 50); // Update every 50ms
+        }
+
+        // Function to generate a random alphanumeric string of a given length
+        function generateRandomString(length, characters) {
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        // --- Specific Code Generation Functions ---
+        function generateAmazonCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return generateRandomString(14, chars);
+        }
+
+        function generateNintendoCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXY0123456789'; return generateRandomString(16, chars).match(/.{1,4}/g).join('-');
+        }
+        function generateRobloxCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(10, chars);
+        }
+        function generateRecRoomCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return generateRandomString(10, chars);
+        }
+        function generateUniversalCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return 'UNI-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars);
+        }
+        function generateGooglePlayCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ00123456789'; return generateRandomString(4, chars) + '-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars);
+        }
+        function generateITunesCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(16, chars);
+        }
+        function generateXboxCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(5, chars) + '-' + generateRandomString(5, chars) + '-' + generateRandomString(5, chars) + '-' + generateRandomString(5, chars) + '-' + generateRandomString(5, chars);
+        }
+        function generatePlayStationCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(4, chars) + '-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars);
+        }
+        function generateSteamCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(5, chars) + '-' + generateRandomString(5, chars) + '-' + generateRandomString(5, chars);
+        }
+        function generateSpotifyCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(12, chars);
+        }
+        function generateNetflixCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; return generateRandomString(11, chars);
+        }
+        function generateStarbucksCode() {
+            const digits = '0123456789'; return generateRandomString(16, digits) + ' PIN:' + generateRandomString(8, digits);
+        }
+        function generateTargetCode() {
+            const digits = '0123456789'; return generateRandomString(15, digits);
+        }
+        function generateWalmartCode() {
+            const digits = '0123456789'; return generateRandomString(16, digits) + ' PIN:' + generateRandomString(4, digits);
+        }
+
+        // New functions for cash out codes
+        function generatePayPalCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            return 'PP-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars) + '-' + generateRandomString(4, chars);
+        }
+
+        function generateVisaCode() { // This is now specifically for cash out
+            let code = '4'; const digits = '0123456789'; code += generateRandomString(15, digits); return code.match(/.{1,4}/g).join(' ');
+        }
+
+        function generateMastercardCode() {
+            const digits = '0123456789';
+            // Mastercard typically starts with 5, 16 digits
+            return '5' + generateRandomString(15, digits).match(/.{1,4}/g).join(' ');
+        }
+
+        // Function to get the specific generated code based on type
+        function getSpecificGeneratedCode(type, amount) {
+            let generatedValue = '';
+            let message = `Your ${amount} ${type} gift card code has been generated.`;
+
+            switch (type) {
+                case 'amazon': generatedValue = generateAmazonCode(); break;
+                case 'nintendo': generatedValue = generateNintendoCode(); break;
+                case 'roblox': generatedValue = generateRobloxCode(); break;
+                case 'recroom': generatedValue = generateRecRoomCode(); break;
+                case 'universal': generatedValue = generateUniversalCode(); break;
+                case 'googleplay': generatedValue = generateGooglePlayCode(); break;
+                case 'itunes': generatedValue = generateITunesCode(); break;
+                case 'xbox': generatedValue = generateXboxCode(); break;
+                case 'playstation': generatedValue = generatePlayStationCode(); break;
+                case 'steam': generatedValue = generateSteamCode(); break;
+                case 'spotify': generatedValue = generateSpotifyCode(); break;
+                case 'netflix': generatedValue = generateNetflixCode(); break;
+                case 'starbucks': generatedValue = generateStarbucksCode(); break;
+                case 'target': generatedValue = generateTargetCode(); break;
+                case 'walmart': generatedValue = generateWalmartCode(); break;
+                // New cash out types
+                case 'paypal': generatedValue = generatePayPalCode(); message = `Your PayPal cash out code has been generated.`; break;
+                case 'visa': generatedValue = generateVisaCode(); message = `Your Visa cash out number has been generated.`; break; // Visa specifically for cash out
+                case 'mastercard': generatedValue = generateMastercardCode(); message = `Your Mastercard cash out number has been generated.`; break;
+                default: generatedValue = 'GEN-ERROR-0000'; message = 'An error occurred during generation.';
+            }
+            return { code: generatedValue, msg: message };
+        }
+
+        // Function to get the platform-specific Opera GX URL
+        function getPlatformSpecificOperaGXUrl() {
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform; // More direct for OS, though userAgent is often more detailed
+
+            if (userAgent.match(/Android/i)) {
+                return 'https://app.appsflyer.com/com.opera.browser?pid=operacom&c=webpage';
+            } else if (userAgent.match(/iPhone|iPad|iPod/i)) {
+                return 'https://apps.apple.com/app/id1411869974?pt=118728196&ct=OperaBrowserOperaCom&mt=8';
+            } else if (userAgent.match(/CrOS/i)) { // Chromebook
+                return 'https://app.appsflyer.com/com.opera.browser?pid=operacom&c=webpage';
+            } else if (userAgent.match(/Windows/i)) {
+                return 'https://www.opera.com/computer/thanks?ni=stable&os=windows';
+            } else if (userAgent.match(/Mac/i)) {
+                return 'https://www.opera.com/computer/thanks?ni=stable&os=mac';
+            } else if (userAgent.match(/Linux/i)) {
+                return 'https://download.opera.com/download/get/?partner=www&opsys=Linux';
+            }
+            // Fallback for unknown platforms
+            return 'https://www.opera.com/download'; // Changed fallback URL
+        }
+
+        // Function to populate fixed offers
+        function populateFixedOffers() {
+            if (!offerButtonsContainer) { // Added null check
+                console.error("offerButtonsContainer not found. Cannot populate offers.");
+                return;
+            }
+            offerButtonsContainer.innerHTML = ''; // Clear existing buttons
+            fixedOffers.forEach((offer) => {
+                const button = document.createElement('button');
+                // All buttons are blue now, with flex to align text and time
+                button.className = `offer-button text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 w-full bg-blue-600 hover:bg-blue-700 flex justify-between items-center`;
+                button.innerHTML = `<span>${offer.text}</span><span class="text-sm opacity-80">${offer.time}</span>`;
+                offerButtonsContainer.appendChild(button);
+
+                // Add event listener to the new button
+                button.addEventListener('click', () => {
+                    if (offer.type === "external_amazon" || offer.type === "external_email_500") { // Handle both Amazon and $500 email offers
+                        window.open(offer.url, '_blank'); // Open in new tab
+
+                        if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Added null checks
+                        if (manualVerifySection) manualVerifySection.classList.add('hidden');
+                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Ensure progress bar is hidden
+                        if (waitingForSurveySection) waitingForSurveySection.classList.remove('hidden'); // Show waiting section
+                        // The loader will spin indefinitely here, as per requirement
+                    } else if (offer.type === "opera_gx") {
+                        const operaGxUrl = getPlatformSpecificOperaGXUrl();
+                        window.open(operaGxUrl, '_blank'); // Open in new tab
+
+                        if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Hide info message
+                        if (manualVerifySection) manualVerifySection.classList.add('hidden'); // Hide offers
+                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+                        if (operaGxLoadingSection) operaGxLoadingSection.classList.remove('hidden');
+                        if (operaGxLoadingMessage) operaGxLoadingMessage.textContent = 'Initiating Opera GX Browser download...'; // Updated text
+
+                        // No automatic progression to generation for Opera GX
+                        // The user must click 'Return and do another survey' to proceed
+                    } else if (offer.type === "survey") {
+                        // Logic for other offers: show survey
+                        if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Hide info message
+                        if (manualVerifySection) manualVerifySection.classList.add('hidden'); // Hide offers
+                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+                        if (surveySection) surveySection.classList.remove('hidden');
+                        // Clear previous survey inputs and validations
+                        if (surveyNameInput) surveyNameInput.value = '';
+                        if (surveyEmailInput) surveyEmailInput.value = '';
+                        if (surveyLocationInput) surveyLocationInput.value = '';
+                        if (surveyNameValidation) surveyNameValidation.classList.add('hidden');
+                        if (surveyEmailValidation) surveyEmailValidation.classList.add('hidden');
+                        if (surveyLocationValidation) surveyLocationValidation.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        // Function to reset the generator to its initial state
+        function resetGenerator() {
+            // Show initial sections
+            if (mainGenerator) mainGenerator.classList.remove('hidden'); // Show main generator
+            if (selectionSection) selectionSection.classList.remove('hidden');
+            if (giftCardAmount && giftCardAmount.parentElement) giftCardAmount.parentElement.classList.remove('hidden');
+            if (usernameEmailInput && usernameEmailInput.parentElement) usernameEmailInput.parentElement.classList.remove('hidden');
+            if (generateButton) generateButton.classList.remove('hidden');
+
+            // Hide all dynamic sections
+            if (reCaptchaSection) reCaptchaSection.classList.add('hidden'); // Hide reCAPTCHA section
+            if (userCheckSection) userCheckSection.classList.add('hidden');
+            if (autoVerifySection) autoVerifySection.classList.add('hidden');
+            if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden');
+            if (manualVerifySection) manualVerifySection.classList.add('hidden');
+            if (surveySection) surveySection.classList.add('hidden');
+            if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden');
+            if (loadingSection) loadingSection.classList.add('hidden');
+            if (resultBox) resultBox.classList.add('hidden');
+            if (generateAnotherButton) generateAnotherButton.classList.add('hidden');
+            if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden'); // Hide new waiting section
+            if (cashOutSection) cashOutSection.classList.add('hidden'); // Hide cash out section
+            if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.add('hidden'); // Hide new code display section
+            if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0; // Hide cash out ready message via opacity
+            if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default'; // Reset cursor
+
+            // Clear input fields and reset messages
+            if (usernameEmailInput) usernameEmailInput.value = '';
+            if (validationMessage) validationMessage.classList.add('hidden');
+
+            // Reset reCAPTCHA status
+            if (reCaptchaCheckbox) reCaptchaCheckbox.checked = false;
+            if (reCaptchaStatus) reCaptchaStatus.innerHTML = ''; // Clear any loader or icon
+
+            // Reset user check section
+            if (userCheckLoader) userCheckLoader.classList.remove('hidden');
+            if (userCheckSuccessIcon) userCheckSuccessIcon.classList.add('hidden');
+            if (userCheckMessage) {
+                userCheckMessage.textContent = 'Checking user...';
+                userCheckMessage.classList.remove('text-red-700', 'text-green-700');
+                userCheckMessage.classList.add('text-blue-700');
+            }
+
+            // Reset auto verify section
+            if (autoVerifyLoader) autoVerifyLoader.classList.remove('hidden');
+            if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden');
+            if (autoVerifyMessage) {
+                autoVerifyMessage.textContent = 'Running Automatic Human Verification...';
+                autoVerifyMessage.classList.remove('text-red-800', 'text-white');
+                autoVerifyMessage.classList.add('text-yellow-700');
+            }
+            if (autoVerifySection) {
+                autoVerifySection.classList.remove('bg-red-100', 'border-red-300'); // Ensure light red is removed
+                autoVerifySection.classList.add('bg-yellow-50', 'border-yellow-200');
+            }
+
+            // Reset global progress bar
+            clearInterval(currentProgressBarInterval); // Clear any active progress bar animation
+            if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+            if (globalProgressBarFill) globalProgressBarFill.style.width = '0%'; // Reset progress bar fill
+
+            if (generatingMessage) generatingMessage.textContent = 'Generating...';
+            if (generatedCodeDisplay) generatedCodeDisplay.textContent = '';
+            if (resultMessageDisplay) resultMessageDisplay.textContent = '';
+
+            // Reset survey inputs and validations
+            if (surveyNameInput) surveyNameInput.value = '';
+            if (surveyEmailInput) surveyEmailInput.value = '';
+            if (surveyLocationInput) surveyLocationInput.value = '';
+            if (surveyNameValidation) surveyNameValidation.classList.add('hidden');
+            if (surveyEmailValidation) surveyEmailValidation.classList.add('hidden');
+            if (surveyLocationValidation) surveyLocationValidation.classList.add('hidden');
+
+            // Reset all new radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(radio => radio.checked = false);
+            if (document.getElementById('employmentStatusValidation')) document.getElementById('employmentStatusValidation').classList.add('hidden');
+            if (document.getElementById('workFrequencyValidation')) document.getElementById('workFrequencyValidation').classList.add('hidden');
+            if (document.getElementById('workLocationValidation')) document.getElementById('workLocationValidation').classList.add('hidden');
+            if (document.getElementById('householdIncomeValidation')) document.getElementById('householdIncomeValidation').classList.add('hidden');
+            if (document.getElementById('peopleInHouseValidation')) document.getElementById('peopleInHouseValidation').classList.add('hidden');
+            if (document.getElementById('ageValidation')) document.getElementById('ageValidation').classList.add('hidden');
+            if (document.getElementById('jobValidation')) document.getElementById('jobValidation').classList.add('hidden');
+
+            // Reset the new agreement checkbox
+            if (surveyAgreementCheckbox) surveyAgreementCheckbox.checked = false;
+            if (surveyAgreementValidation) surveyAgreementValidation.classList.add('hidden');
+
+            // Reset cash out section inputs and validations
+            document.querySelectorAll('input[name="cashOutMethod"]').forEach(radio => radio.checked = false);
+            if (bankAccountNumberInput) bankAccountNumberInput.value = '';
+            if (cashOutMethodValidation) cashOutMethodValidation.classList.add('hidden');
+            if (bankAccountValidation) bankAccountValidation.classList.add('hidden');
+            if (cashOutGeneratedCode) cashOutGeneratedCode.textContent = '';
+            if (cashOutResultMessage) cashOutResultMessage.textContent = '';
+            if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.classList.add('hidden'); // Hide this button on reset
+            if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.classList.add('hidden'); // Hide this button on reset
+
+            // Reset dropdowns to default values (optional, but good for full reset)
+            if (giftCardType) giftCardType.value = 'amazon';
+            if (giftCardAmount) giftCardAmount.value = '250';
+        }
+
+        // Function to generate and display cash out code
+        function generateAndDisplayCashOutCode(method) {
+            if (currentMoney < 100) {
+                if (cashOutGeneratedCode) cashOutGeneratedCode.textContent = 'Insufficient Funds!';
+                if (cashOutResultMessage) cashOutResultMessage.textContent = 'Earn more cash to continue cashing out.';
+                if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.classList.add('hidden');
+                if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.classList.remove('hidden');
+                if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default';
+                if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0;
+                return;
+            }
+
+            currentMoney -= 100.00;
+            if (moneyCounterDisplay) moneyCounterDisplay.textContent = `$${currentMoney.toFixed(2)}`;
+
+            const result = getSpecificGeneratedCode(method, '$100');
+            if (cashOutGeneratedCode) cashOutGeneratedCode.textContent = result.code;
+            if (cashOutResultMessage) cashOutResultMessage.textContent = result.msg;
+
+            if (currentMoney >= 100) {
+                if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.classList.remove('hidden');
+                if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.classList.add('hidden');
+                if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'pointer';
+                if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 1;
+            } else {
+                if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.classList.add('hidden');
+                if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.classList.remove('hidden');
+                if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default';
+                if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0;
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Log to confirm script execution and DOMContentLoaded
+            console.log("Script loaded and DOMContentLoaded event fired.");
+            console.log("document.readyState:", document.readyState);
+
+            // Assign moneyCounterDisplay first and immediately attach listener if found
+            moneyCounterDisplay = document.getElementById('moneyCounter');
+            if (!moneyCounterDisplay) {
+                console.error("CRITICAL ERROR: moneyCounterDisplay element not found. Cannot attach event listener. Exiting DOMContentLoaded handler.");
+                return; // Exit if the critical element is missing
+            }
+
+            moneyCounterDisplay.addEventListener('click', () => {
+                console.log("Money counter clicked. Current money:", currentMoney);
+                if (currentMoney >= 100) {
+                    if (mainGenerator) mainGenerator.classList.add('hidden'); // Added null check
+                    if (cashOutSection) cashOutSection.classList.remove('hidden'); // Added null check
+                    if (introText1) introText1.style.opacity = 0; // Added null check
+                    if (introText2) introText2.style.opacity = 0; // Added null check
+                    if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0; // Added null check
+                    if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default'; // Added null check
+                }
+            });
+
+
+            // Assign other elements to variables inside DOMContentLoaded
+            generateButton = document.getElementById('generateButton');
+            giftCardType = document.getElementById('giftCardType');
+            giftCardAmount = document.getElementById('giftCardAmount');
+            usernameEmailInput = document.getElementById('usernameEmail');
+            validationMessage = document.getElementById('validationMessage');
+            selectionSection = document.getElementById('selectionSection');
+            mainGenerator = document.getElementById('mainGenerator'); // Get the main generator div
+
+            // reCAPTCHA elements
+            reCaptchaSection = document.getElementById('reCaptchaSection');
+            reCaptchaCheckbox = document.getElementById('reCaptchaCheckbox');
+            reCaptchaStatus = document.getElementById('reCaptchaStatus');
+
+            userCheckSection = document.getElementById('userCheckSection');
+            userCheckLoader = document.getElementById('userCheckLoader');
+            userCheckSuccessIcon = document.getElementById('userCheckSuccessIcon');
+            userCheckMessage = document.getElementById('userCheckMessage');
+            autoVerifySection = document.getElementById('autoVerifySection');
+            autoVerifyLoader = document.getElementById('autoVerifyLoader');
+            autoVerifyFailIcon = document.getElementById('autoVerifyFailIcon');
+            autoVerifyMessage = document.getElementById('autoVerifyMessage');
+            globalProgressBarContainer = document.getElementById('globalProgressBarContainer');
+            globalProgressBarFill = document.getElementById('globalProgressBarFill');
+            manualVerifyInfoSection = document.getElementById('manualVerifyInfoSection');
+            manualVerifySection = document.getElementById('manualVerifySection');
+            offerButtonsContainer = document.getElementById('offerButtonsContainer');
+            surveySection = document.getElementById('surveySection');
+            surveyNameInput = document.getElementById('surveyName');
+            surveyNameValidation = document.getElementById('surveyNameValidation');
+            surveyEmailInput = document.getElementById('surveyEmail');
+            surveyEmailValidation = document.getElementById('surveyEmailValidation');
+            surveyLocationInput = document.getElementById('surveyLocation');
+            surveyLocationValidation = document.getElementById('surveyLocationValidation');
+            submitSurveyButton = document.getElementById('submitSurveyButton');
+            operaGxLoadingSection = document.getElementById('operaGxLoadingSection');
+            operaGxLoadingMessage = document.getElementById('operaGxLoadingMessage');
+            loadingSection = document.getElementById('loadingSection');
+            generatingMessage = document.getElementById('generatingMessage');
+            resultBox = document.getElementById('resultBox');
+            generatedCodeDisplay = document.getElementById('generatedCode');
+            resultMessageDisplay = document.getElementById('resultMessage');
+            generateAnotherButton = document.getElementById('generateAnotherButton');
+            surveyAgreementCheckbox = document.getElementById('surveyAgreementCheckbox'); // Assigned here
+            surveyAgreementValidation = document.getElementById('surveyAgreementValidation'); // Assigned here
+            waitingForSurveySection = document.getElementById('waitingForSurveySection'); // New waiting section
+            returnFromAmazonOfferButton = document.getElementById('returnFromAmazonOfferButton'); // New return button
+            returnFromSurveyButton = document.getElementById('returnFromSurveyButton'); // New return button
+            returnFromOperaGxButton = document.getElementById('returnFromOperaGxButton'); // New return button
+            dollarSignBackground = document.getElementById('dollarSignBackground'); // Corrected assignment
+            introText1 = document.getElementById('introText1'); // Get intro text 1
+            introText2 = document.getElementById('introText2'); // Get intro text 2
+            cashOutReadyMessage = document.getElementById('cashOutReadyMessage'); // Get cash out ready message
+
+            // Cash Out Section Elements
+            cashOutSection = document.getElementById('cashOutSection');
+            cashOutMethodRadios = document.querySelectorAll('input[name="cashOutMethod"]');
+            bankAccountNumberInput = document.getElementById('bankAccountNumber');
+            cashOutMethodValidation = document.getElementById('cashOutMethodValidation');
+            bankAccountValidation = document.getElementById('bankAccountValidation');
+            processCashOutButton = document.getElementById('processCashOutButton');
+            cashOutCodeDisplaySection = document.getElementById('cashOutCodeDisplaySection'); // New code display section
+            cashOutGeneratedCode = document.getElementById('cashOutGeneratedCode');
+            cashOutResultMessage = document.getElementById('cashOutResultMessage');
+            generateAnotherCashOutCodeButton = document.getElementById('generateAnotherCashOutCodeButton'); // New button
+            backToGeneratorFromCodeDisplayButton = document.getElementById('backToGeneratorFromCodeDisplayButton'); // New button
+
+
+            // Add event listener to the "Generate Another Card" button
+            if (generateAnotherButton) generateAnotherButton.addEventListener('click', resetGenerator); // Added null check
+
+            // Event listeners for the new return buttons
+            if (returnFromAmazonOfferButton) returnFromAmazonOfferButton.addEventListener('click', () => { // Added null check
+                if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden');
+                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
+                if (manualVerifySection) manualVerifySection.classList.remove('hidden');
+                populateFixedOffers(); // Re-populate offers to ensure fresh state
+            });
+
+            if (returnFromSurveyButton) returnFromSurveyButton.addEventListener('click', () => { // Added null check
+                if (surveySection) surveySection.classList.add('hidden');
+                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
+                if (manualVerifySection) manualVerifySection.classList.remove('hidden');
+                populateFixedOffers();
+            });
+
+            if (returnFromOperaGxButton) returnFromOperaGxButton.addEventListener('click', () => { // Added null check
+                if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden');
+                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
+                if (manualVerifySection) manualVerifySection.classList.remove('hidden');
+                populateFixedOffers();
+            });
+
+            // Event listener for the "Cash Out!" button
+            if (processCashOutButton) processCashOutButton.addEventListener('click', () => { // Added null check
+                let selectedMethod = '';
+                let isValid = true;
+
+                // Validate payment method selection
+                if (cashOutMethodRadios) { // Added null check
+                    cashOutMethodRadios.forEach(radio => {
+                        if (radio.checked) {
+                            selectedMethod = radio.value;
+                        }
+                    });
+                }
+
+
+                if (selectedMethod === '') {
+                    if (cashOutMethodValidation) cashOutMethodValidation.classList.remove('hidden'); // Added null check
+                    isValid = false;
+                } else {
+                    if (cashOutMethodValidation) cashOutMethodValidation.classList.add('hidden'); // Added null check
+                }
+
+                // Validate bank account number
+                if (bankAccountNumberInput && bankAccountNumberInput.value.trim() === '') { // Added null check
+                    if (bankAccountValidation) bankAccountValidation.classList.remove('hidden'); // Added null check
+                    isValid = false;
+                } else {
+                    if (bankAccountValidation) bankAccountValidation.classList.add('hidden'); // Added null check
+                }
+
+                if (isValid) {
+                    selectedCashOutMethod = selectedMethod; // Store the selected method
+                    if (cashOutSection) cashOutSection.classList.add('hidden'); // Added null check
+
+                    setTimeout(() => {
+                        if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden'); // Added null check
+                        generateAndDisplayCashOutCode(selectedCashOutMethod); // Generate and display the first code
+                    }, 1500); // Simulate loading time
+                }
+            });
+
+            // Event listener for "Generate Another Cash Out Code" button
+            if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.addEventListener('click', () => { // Added null check
+                if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.add('hidden'); // Added null check
+
+                setTimeout(() => {
+                    if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden'); // Added null check
+                    generateAndDisplayCashOutCode(selectedCashOutMethod);
+                }, 1500); // Simulate loading time
+            });
+
+            // Event listener for "Back to Generator" button from code display
+            if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.addEventListener('click', () => { // Added null check
+                resetGenerator(); // Reset everything and go back to initial state
+            });
+
+
+            // Helper function to get selected radio button value
+            function getSelectedRadioValue(name) {
+                const selected = document.querySelector(`input[name="${name}"]:checked`);
+                return selected ? selected.value : '';
+            }
+
+            // Helper function to check if a radio button group is selected
+            function isRadioGroupSelected(name) {
+                return document.querySelector(`input[name="${name}"]:checked`) !== null;
+            }
+
+            // Event listener for the new Survey Submit button (defined here to access elements)
+            if (submitSurveyButton) submitSurveyButton.addEventListener('click', () => { // Added null check
+                let isValid = true;
+
+                // Validate Name
+                if (surveyNameInput && surveyNameInput.value.trim() === '') { // Added null check
+                    if (surveyNameValidation) { // Added null check
+                        surveyNameValidation.textContent = 'Please enter your name.';
+                        surveyNameValidation.classList.remove('hidden');
+                    }
+                    isValid = false;
+                    console.log('Validation failed: Name'); // Debug log
+                } else {
+                    if (surveyNameValidation) surveyNameValidation.classList.add('hidden'); // Added null check
+                }
+
+                // Validate Email (must end with @gmail.com)
+                if (surveyEmailInput && !surveyEmailInput.value.endsWith('@gmail.com')) { // Added null check
+                    if (surveyEmailValidation) { // Added null check
+                        surveyEmailValidation.textContent = 'Please enter a valid Gmail address (e.g., @gmail.com).';
+                        surveyEmailValidation.classList.remove('hidden');
+                    }
+                    isValid = false;
+                    console.log('Validation failed: Email'); // Debug log
+                } else {
+                    if (surveyEmailValidation) surveyEmailValidation.classList.add('hidden'); // Added null check
+                }
+
+                // Validate Location (now just checks for non-empty)
+                if (surveyLocationInput && surveyLocationInput.value.trim() === '') { // Added null check
+                    if (surveyLocationValidation) { // Added null check
+                        surveyLocationValidation.textContent = "Please enter a location.";
+                        surveyLocationValidation.classList.remove('hidden');
+                    }
+                    isValid = false;
+                    console.log('Validation failed: Location'); // Debug log
+                } else {
+                    if (surveyLocationValidation) surveyLocationValidation.classList.add('hidden'); // Added null check
+                }
+
+                // Validate new multiple-choice questions
+                const radioGroups = ['employmentStatus', 'workFrequency', 'workLocation', 'householdIncome', 'peopleInHouse', 'age', 'job'];
+                radioGroups.forEach(groupName => {
+                    const validationElement = document.getElementById(`${groupName}Validation`);
+                    if (!isRadioGroupSelected(groupName)) {
+                        if (validationElement) validationElement.classList.remove('hidden'); // Added null check
+                        isValid = false;
+                        console.log(`Validation failed: ${groupName}`); // Debug log
+                    } else {
+                        if (validationElement) validationElement.classList.add('hidden'); // Added null check
+                    }
+                });
+
+                // Validate the new agreement checkbox
+                if (surveyAgreementCheckbox && !surveyAgreementCheckbox.checked) { // Added null check
+                    if (surveyAgreementValidation) surveyAgreementValidation.classList.remove('hidden'); // Added null check
+                    isValid = false;
+                    console.log('Validation failed: Agreement checkbox'); // Debug log
+                } else {
+                    if (surveyAgreementValidation) surveyAgreementValidation.classList.add('hidden'); // Added null check
+                }
+
+                console.log('Final isValid:', isValid); // Debug log for overall validity
+
+                if (isValid) {
+                    // If all survey questions are valid, proceed to generation
+                    if (surveySection) surveySection.classList.add('hidden'); // Added null check
+                    if (loadingSection) loadingSection.classList.remove('hidden'); // Added null check
+                    if (generatingMessage && giftCardAmount && usernameEmailInput) generatingMessage.textContent = `Generating $${giftCardAmount.value} to ${usernameEmailInput.value.trim()}'s account...`; // Added null check
+                    animateProgressBar(0, 100, 2000, false); // Progress bar for generation
+
+                    setTimeout(() => {
+                        if (loadingSection) loadingSection.classList.add('hidden'); // Added null check
+                        if (resultBox) resultBox.classList.remove('hidden'); // Added null check
+                        if (generateAnotherButton) generateAnotherButton.classList.remove('hidden'); // Show generate another button
+                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+
+                        const result = getSpecificGeneratedCode(giftCardType.value, `$${giftCardAmount.value}`);
+                        if (generatedCodeDisplay) generatedCodeDisplay.textContent = result.code; // Added null check
+                        if (resultMessageDisplay) resultMessageDisplay.textContent = result.msg; // Added null check
+                    }, 2000); // 2-second delay for main generation
+                }
+            });
+
+            if (generateButton) generateButton.addEventListener('click', () => { // Added null check
+                const usernameEmail = usernameEmailInput ? usernameEmailInput.value.trim() : ''; // Added null check
+
+                // Validation: Check if username/email is blank
+                if (usernameEmail === '') {
+                    if (validationMessage) validationMessage.classList.remove('hidden'); // Added null check
+                    return; // Stop execution if blank
+                } else {
+                    if (validationMessage) validationMessage.classList.add('hidden'); // Added null check
+                }
+
+                // Hide initial sections
+                if (selectionSection) selectionSection.classList.add('hidden'); // Added null check
+                if (giftCardAmount && giftCardAmount.parentElement) giftCardAmount.parentElement.classList.add('hidden'); // Added null check
+                if (usernameEmailInput && usernameEmailInput.parentElement) usernameEmailInput.parentElement.classList.add('hidden'); // Added null check
+                if (generateButton) generateButton.classList.add('hidden'); // Added null check
+                if (resultBox) resultBox.classList.add('hidden'); // Added null check
+                if (loadingSection) loadingSection.classList.add('hidden'); // Added null check
+                if (manualVerifySection) manualVerifySection.classList.add('hidden'); // Added null check
+                if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden'); // Added null check
+                if (surveySection) surveySection.classList.add('hidden'); // Added null check
+                if (generateAnotherButton) generateAnotherButton.classList.add('hidden'); // Added null check
+                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Ensure info section is hidden at start
+                if (reCaptchaSection) reCaptchaSection.classList.add('hidden'); // Ensure reCAPTCHA is hidden initially
+                if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden'); // Ensure new waiting section is hidden
+
+
+                // Show user check section
+                if (userCheckSection) userCheckSection.classList.remove('hidden'); // Added null check
+                if (userCheckMessage) { // Added null check
+                    userCheckMessage.textContent = 'Checking user...';
+                    userCheckMessage.classList.remove('text-red-700', 'text-green-700');
+                    userCheckMessage.classList.add('text-blue-700');
+                }
+                if (userCheckLoader) userCheckLoader.classList.remove('hidden'); // Added null check
+                if (userCheckSuccessIcon) userCheckSuccessIcon.classList.add('hidden'); // Added null check
+
+                // Start progress bar for user check - NOW FILLS TO 100%
+                animateProgressBar(0, 100, 1500, false); // User check progress bar fills to 100%
+
+                const selectedType = giftCardType ? giftCardType.value : ''; // Added null check
+                const selectedAmount = giftCardAmount ? giftCardAmount.value : ''; // Added null check
+
+                // Simulate user check delay
+                setTimeout(() => {
+                    if (userCheckMessage && usernameEmailInput) { // Added null check
+                        userCheckMessage.textContent = `User "${usernameEmailInput.value.trim()}" Found!`;
+                        userCheckMessage.classList.remove('text-blue-700');
+                        userCheckMessage.classList.add('text-green-700');
+                    }
+                    if (userCheckLoader) userCheckLoader.classList.add('hidden'); // Added null check
+                    if (userCheckSuccessIcon) userCheckSuccessIcon.classList.remove('hidden'); // Added null check
+                    clearInterval(currentProgressBarInterval); // Stop progress bar
+                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+
+                    // After user check, proceed to automatic verification check
+                    setTimeout(() => { // This is the start of the first nested setTimeout's callback
+                        if (userCheckSection) userCheckSection.classList.add('hidden'); // Added null check
+                        if (autoVerifySection) autoVerifySection.classList.remove('hidden'); // Added null check
+                        if (autoVerifyMessage) { // Added null check
+                            autoVerifyMessage.textContent = 'Running Automatic Human Verification...';
+                            autoVerifyMessage.classList.remove('text-red-800', 'text-white'); // Clean up colors
+                            autoVerifyMessage.classList.add('text-yellow-700'); // Set to yellow for "running"
+                        }
+                        if (autoVerifySection) { // Added null check
+                            autoVerifySection.classList.remove('bg-yellow-50', 'border-yellow-200');
+                            autoVerifySection.classList.add('bg-red-100', 'border-red-300');
+                        }
+                        if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden'); // Added null check
+                        if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden'); // Added null check
+
+
+                        // Start jittering progress bar in segments for auto verification
+                        // Segment 1: 0% to 20%
+                        animateProgressBar(0, 20, 500, true);
+                        setTimeout(() => { // This is the start of the second nested setTimeout's callback
+                            // Segment 2: 20% to 45%
+                            animateProgressBar(20, 45, 700, true);
+                            setTimeout(() => { // This is the start of the third nested setTimeout's callback
+                                // Segment 3: 45% to 65%
+                                animateProgressBar(45, 65, 800, true);
+                                setTimeout(() => { // This is the start of the fourth nested setTimeout's callback
+                                    clearInterval(currentProgressBarInterval); // Stop progress bar animation
+                                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Added null check
+
+                                    if (autoVerifyMessage) { // Added null check
+                                        autoVerifyMessage.textContent = 'Automatic Human Verification failed.';
+                                        autoVerifyMessage.classList.remove('text-yellow-700', 'text-green-700');
+                                        autoVerifyMessage.classList.add('text-red-800'); // Text color for light red background
+                                    }
+
+                                    // Change autoVerifySection background to light red for "failed" state
+                                    if (autoVerifySection) { // Added null check
+                                        autoVerifySection.classList.remove('bg-yellow-50', 'border-yellow-200');
+                                        autoVerifySection.classList.add('bg-red-100', 'border-red-300');
+                                    }
+                                    if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden'); // Added null check
+                                    if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden'); // Added null check
+
+
+                                    // After auto verification failure, show reCAPTCHA
+                                    setTimeout(() => { // This is the start of the fifth nested setTimeout's callback
+                                        if (autoVerifySection) autoVerifySection.classList.add('hidden'); // Added null check
+                                        if (reCaptchaSection) reCaptchaSection.classList.remove('hidden'); // Added null check
+                                        if (reCaptchaCheckbox) reCaptchaCheckbox.checked = false; // Ensure checkbox is unchecked initially
+                                        if (reCaptchaStatus) reCaptchaStatus.innerHTML = ''; // Clear status area
+                                    }, 1500); // CLOSING for fifth nested setTimeout
+                                }, 800); // CLOSING for fourth nested setTimeout
+                            }, 700); // CLOSING for third nested setTimeout
+                        }, 500); // CLOSING for second nested setTimeout
+                    }, 1500); // CLOSING for first nested setTimeout
+                }, 1500); // CLOSING for user check delay setTimeout
+            }); // CLOSING for generateButton click listener
+            // Event listener for the fake reCAPTCHA checkbox
+            if (reCaptchaCheckbox) reCaptchaCheckbox.addEventListener('change', () => { // Added null check
+                if (reCaptchaCheckbox.checked) {
+                    // Show loading spiral
+                    if (reCaptchaStatus) reCaptchaStatus.innerHTML = '<div class="loader-sm"></div>'; // Use smaller loader
+
+                    setTimeout(() => {
+                        // Replace spiral with red X
+                        if (reCaptchaStatus) reCaptchaStatus.innerHTML = `
+                            <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        `;
+
+                        // After another brief delay, proceed to manual verification offers
+                        setTimeout(() => {
+                            if (reCaptchaSection) reCaptchaSection.classList.add('hidden'); // Added null check
+                            if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden'); // Show info message
+                            if (manualVerifySection) manualVerifySection.classList.remove('hidden'); // Show manual verification offers
+                            populateFixedOffers(); // Populate offers
+                        }, 1500); // 1.5-second delay for red X display
+                    }, 1000); // 1-second delay for loading spiral
+                } else {
+                    // If unchecked, clear the status area
+                    if (reCaptchaStatus) reCaptchaStatus.innerHTML = ''; // Added null check
+                }
+            });
+
+            // Function to create and animate a single dollar sign
+            function createDollarSign() {
+                const dollar = document.createElement('span');
+                dollar.textContent = '💲';
+                dollar.classList.add('dollar-sign');
+
+                // Randomize size
+                const size = Math.random() * 2 + 1; // 1rem to 3rem
+                dollar.style.fontSize = `${size}rem`;
+
+                // Randomize starting horizontal position
+                const startX = Math.random() * 100; // 0% to 100% viewport width
+                dollar.style.left = `${startX}vw`;
+
+                // Randomize animation duration and delay
+                const duration = Math.random() * 10 + 5; // 5s to 15s
+                const delay = Math.random() * 5; // 0s to 5s
+                dollar.style.animation = `floatDollar ${duration}s ${delay}s infinite linear forwards`;
+
+                // Add click event listener to the dollar sign
+                dollar.addEventListener('click', () => {
+                    currentMoney += 1.00; // Add $1.00
+                    if (moneyCounterDisplay) moneyCounterDisplay.textContent = `$${currentMoney.toFixed(2)}`; // Added null check
+                    dollar.remove(); // Remove the clicked dollar sign
+
+                    // Check if money reached $100
+                    if (currentMoney >= 100) {
+                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 1; // Added null check
+                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'pointer'; // Added null check
+                    } else {
+                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0; // Added null check
+                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default'; // Added null check
+                    }
+                });
+
+                if (dollarSignBackground) dollarSignBackground.appendChild(dollar); // Added null check
+
+                // Remove dollar sign after its animation cycle to prevent DOM clutter
+                dollar.addEventListener('animationiteration', () => {
+                    // Reset position and opacity for next iteration
+                    const newStartX = Math.random() * 100;
+                    dollar.style.left = `${newStartX}vw`;
+                    dollar.style.opacity = 0; // Ensure it fades in again
+                });
+            }
+
+            // Generate a few dollar signs initially and then continuously
+            for (let i = 0; i < 20; i++) { // Initial batch
+                createDollarSign();
+            }
+
+            // Continuously add new dollar signs
+            setInterval(createDollarSign, 1000); // Add a new dollar sign every 1 second
+
+            // Show introductory text briefly
+            setTimeout(() => {
+                if (introText1) introText1.style.opacity = 1; // Added null check
+                if (introText2) introText2.style.opacity = 1; // Added null check
+            }, 100); // Small delay to ensure they render before animating
+
+            setTimeout(() => {
+                if (introText1) introText1.style.opacity = 0; // Added null check
+                if (introText2) introText2.style.opacity = 0; // Added null check
+            }, 5000); // Fade out after 5 seconds
+        });
+    </script>
+</body>
+</html>
