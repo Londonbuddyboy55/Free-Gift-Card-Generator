@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gift Card Generator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;7text/markdown700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -557,9 +557,7 @@
         <div id="operaGxLoadingSection" class="hidden flex flex-col items-center justify-center p-5 bg-blue-50 rounded-lg border border-blue-200 mb-6">
             <div class="loader mb-4"></div>
             <p id="operaGxLoadingMessage" class="text-blue-700 text-lg">Initiating Opera GX Browser download...</p>
-            <button id="returnFromOperaGxButton" class="mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-                Return and do another survey
-            </button>
+            <!-- Removed the return button for Opera GX as it now proceeds automatically -->
         </div>
 
         <div id="loadingSection" class="hidden flex flex-col items-center justify-center p-5">
@@ -674,7 +672,7 @@
         let waitingForSurveySection;
         let returnFromAmazonOfferButton;
         let returnFromSurveyButton;
-        let returnFromOperaGxButton;
+        let returnFromOperaGxButton; // This variable is no longer used for a button, but kept for consistency
         let dollarSignBackground;
         let introText1;
         let introText2;
@@ -690,8 +688,8 @@
         let cashOutResultMessage;
         let generateAnotherCashOutCodeButton;
         let backToGeneratorFromCodeDisplayButton;
-        let surveyAgreementCheckbox; // Added this missing declaration
-        let surveyAgreementValidation; // Added this missing declaration
+        let surveyAgreementCheckbox;
+        let surveyAgreementValidation;
 
 
         // Fixed offers with estimated wait times and URLs
@@ -708,7 +706,7 @@
             const startTime = Date.now();
             let currentProgress = startWidth;
 
-            if (globalProgressBarContainer) { // Added null check
+            if (globalProgressBarContainer) {
                 globalProgressBarContainer.classList.remove('hidden'); // Ensure it's visible
             }
 
@@ -726,7 +724,7 @@
 
                     if (percentageComplete >= 1) { // If duration is complete for jittering
                         clearInterval(currentProgressBarInterval);
-                        if (globalProgressBarFill) { // Added null check
+                        if (globalProgressBarFill) {
                             globalProgressBarFill.style.width = `${targetWidth}%`; // Snap to the intended stop point
                         }
                     }
@@ -737,13 +735,13 @@
 
                     if (percentageComplete >= 1) {
                         clearInterval(currentProgressBarInterval);
-                        if (globalProgressBarFill) { // Added null check
+                        if (globalProgressBarFill) {
                             globalProgressBarFill.style.width = `${targetWidth}%`;
                         }
                         // The calling function will handle hiding the bar if needed (e.g., after user found)
                     }
                 }
-                if (globalProgressBarFill) { // Added null check
+                if (globalProgressBarFill) {
                     globalProgressBarFill.style.width = `${currentProgress}%`;
                 }
             }, 50); // Update every 50ms
@@ -834,17 +832,18 @@
                 case 'nintendo': generatedValue = generateNintendoCode(); break;
                 case 'roblox': generatedValue = generateRobloxCode(); break;
                 case 'recroom': generatedValue = generateRecRoomCode(); break;
-                case 'universal': generatedValue = generateUniversalCode(); break;
-                case 'googleplay': generatedValue = generateGooglePlayCode(); break;
-                case 'itunes': generatedValue = generateITunesCode(); break;
+                // Removed Universal from here
+                // Removed Google Play from here
+                // Removed iTunes from here
                 case 'xbox': generatedValue = generateXboxCode(); break;
                 case 'playstation': generatedValue = generatePlayStationCode(); break;
                 case 'steam': generatedValue = generateSteamCode(); break;
                 case 'spotify': generatedValue = generateSpotifyCode(); break;
-                case 'netflix': generatedValue = generateNetflixCode(); break;
+                // Removed Netflix from here
                 case 'starbucks': generatedValue = generateStarbucksCode(); break;
-                case 'target': generatedValue = generateTargetCode(); break;
-                case 'walmart': generatedValue = generateWalmartCode(); break;
+                // Removed Target from here
+                // Removed Walmart from here
+                case 'googleplay': generatedValue = generateGooglePlayCode(); break; // Added back Google Play for code generation
                 // New cash out types
                 case 'paypal': generatedValue = generatePayPalCode(); message = `Your PayPal cash out code has been generated.`; break;
                 case 'visa': generatedValue = generateVisaCode(); message = `Your Visa cash out number has been generated.`; break; // Visa specifically for cash out
@@ -878,7 +877,7 @@
 
         // Function to populate fixed offers
         function populateFixedOffers() {
-            if (!offerButtonsContainer) { // Added null check
+            if (!offerButtonsContainer) {
                 console.error("offerButtonsContainer not found. Cannot populate offers.");
                 return;
             }
@@ -895,7 +894,7 @@
                     if (offer.type === "external_amazon" || offer.type === "external_email_500") { // Handle both Amazon and $500 email offers
                         window.open(offer.url, '_blank'); // Open in new tab
 
-                        if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Added null checks
+                        if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden');
                         if (manualVerifySection) manualVerifySection.classList.add('hidden');
                         if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Ensure progress bar is hidden
                         if (waitingForSurveySection) waitingForSurveySection.classList.remove('hidden'); // Show waiting section
@@ -908,10 +907,32 @@
                         if (manualVerifySection) manualVerifySection.classList.add('hidden'); // Hide offers
                         if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
                         if (operaGxLoadingSection) operaGxLoadingSection.classList.remove('hidden');
-                        if (operaGxLoadingMessage) operaGxLoadingMessage.textContent = 'Initiating Opera GX Browser download...'; // Updated text
+                        if (operaGxLoadingMessage) operaGxLoadingMessage.textContent = 'Initiating Opera GX Browser download...';
 
-                        // No automatic progression to generation for Opera GX
-                        // The user must click 'Return and do another survey' to proceed
+                        // Removed the return button for Opera GX here as it will now proceed automatically
+                        if (returnFromOperaGxButton) returnFromOperaGxButton.classList.add('hidden');
+
+
+                        // Add a 3-second timeout before proceeding to generation
+                        setTimeout(() => {
+                            if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden');
+                            if (loadingSection) loadingSection.classList.remove('hidden');
+                            if (generatingMessage && giftCardAmount && usernameEmailInput) {
+                                generatingMessage.textContent = `Generating $${giftCardAmount.value} to ${usernameEmailInput.value.trim()}'s account...`;
+                            }
+                            animateProgressBar(0, 100, 2000, false); // Progress bar for generation
+
+                            setTimeout(() => {
+                                if (loadingSection) loadingSection.classList.add('hidden');
+                                if (resultBox) resultBox.classList.remove('hidden');
+                                if (generateAnotherButton) generateAnotherButton.classList.remove('hidden');
+                                if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden');
+
+                                const result = getSpecificGeneratedCode(giftCardType.value, `$${giftCardAmount.value}`);
+                                if (generatedCodeDisplay) generatedCodeDisplay.textContent = result.code;
+                                if (resultMessageDisplay) resultMessageDisplay.textContent = result.msg;
+                            }, 2000); // 2-second delay for main generation
+                        }, 3000); // 3-second delay for Opera GX "download initiation"
                     } else if (offer.type === "survey") {
                         // Logic for other offers: show survey
                         if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Hide info message
@@ -1080,12 +1101,12 @@
             moneyCounterDisplay.addEventListener('click', () => {
                 console.log("Money counter clicked. Current money:", currentMoney);
                 if (currentMoney >= 100) {
-                    if (mainGenerator) mainGenerator.classList.add('hidden'); // Added null check
-                    if (cashOutSection) cashOutSection.classList.remove('hidden'); // Added null check
-                    if (introText1) introText1.style.opacity = 0; // Added null check
-                    if (introText2) introText2.style.opacity = 0; // Added null check
-                    if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0; // Added null check
-                    if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default'; // Added null check
+                    if (mainGenerator) mainGenerator.classList.add('hidden');
+                    if (cashOutSection) cashOutSection.classList.remove('hidden');
+                    if (introText1) introText1.style.opacity = 0;
+                    if (introText2) introText2.style.opacity = 0;
+                    if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0;
+                    if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default';
                 }
             });
 
@@ -1133,16 +1154,15 @@
             generatedCodeDisplay = document.getElementById('generatedCode');
             resultMessageDisplay = document.getElementById('resultMessage');
             generateAnotherButton = document.getElementById('generateAnotherButton');
-            surveyAgreementCheckbox = document.getElementById('surveyAgreementCheckbox'); // Assigned here
-            surveyAgreementValidation = document.getElementById('surveyAgreementValidation'); // Assigned here
-            waitingForSurveySection = document.getElementById('waitingForSurveySection'); // New waiting section
-            returnFromAmazonOfferButton = document.getElementById('returnFromAmazonOfferButton'); // New return button
-            returnFromSurveyButton = document.getElementById('returnFromSurveyButton'); // New return button
-            returnFromOperaGxButton = document.getElementById('returnFromOperaGxButton'); // New return button
-            dollarSignBackground = document.getElementById('dollarSignBackground'); // Corrected assignment
-            introText1 = document.getElementById('introText1'); // Get intro text 1
-            introText2 = document.getElementById('introText2'); // Get intro text 2
-            cashOutReadyMessage = document.getElementById('cashOutReadyMessage'); // Get cash out ready message
+            surveyAgreementCheckbox = document.getElementById('surveyAgreementCheckbox');
+            surveyAgreementValidation = document.getElementById('surveyAgreementValidation');
+            waitingForSurveySection = document.getElementById('waitingForSurveySection');
+            returnFromAmazonOfferButton = document.getElementById('returnFromAmazonOfferButton');
+            returnFromSurveyButton = document.getElementById('returnFromSurveyButton');
+            dollarSignBackground = document.getElementById('dollarSignBackground');
+            introText1 = document.getElementById('introText1');
+            introText2 = document.getElementById('introText2');
+            cashOutReadyMessage = document.getElementById('cashOutReadyMessage');
 
             // Cash Out Section Elements
             cashOutSection = document.getElementById('cashOutSection');
@@ -1151,45 +1171,38 @@
             cashOutMethodValidation = document.getElementById('cashOutMethodValidation');
             bankAccountValidation = document.getElementById('bankAccountValidation');
             processCashOutButton = document.getElementById('processCashOutButton');
-            cashOutCodeDisplaySection = document.getElementById('cashOutCodeDisplaySection'); // New code display section
+            cashOutCodeDisplaySection = document.getElementById('cashOutCodeDisplaySection');
             cashOutGeneratedCode = document.getElementById('cashOutGeneratedCode');
             cashOutResultMessage = document.getElementById('cashOutResultMessage');
-            generateAnotherCashOutCodeButton = document.getElementById('generateAnotherCashOutCodeButton'); // New button
-            backToGeneratorFromCodeDisplayButton = document.getElementById('backToGeneratorFromCodeDisplayButton'); // New button
+            generateAnotherCashOutCodeButton = document.getElementById('generateAnotherCashOutCodeButton');
+            backToGeneratorFromCodeDisplayButton = document.getElementById('backToGeneratorFromCodeDisplayButton');
 
 
             // Add event listener to the "Generate Another Card" button
-            if (generateAnotherButton) generateAnotherButton.addEventListener('click', resetGenerator); // Added null check
+            if (generateAnotherButton) generateAnotherButton.addEventListener('click', resetGenerator);
 
             // Event listeners for the new return buttons
-            if (returnFromAmazonOfferButton) returnFromAmazonOfferButton.addEventListener('click', () => { // Added null check
+            if (returnFromAmazonOfferButton) returnFromAmazonOfferButton.addEventListener('click', () => {
                 if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden');
                 if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
                 if (manualVerifySection) manualVerifySection.classList.remove('hidden');
                 populateFixedOffers(); // Re-populate offers to ensure fresh state
             });
 
-            if (returnFromSurveyButton) returnFromSurveyButton.addEventListener('click', () => { // Added null check
+            if (returnFromSurveyButton) returnFromSurveyButton.addEventListener('click', () => {
                 if (surveySection) surveySection.classList.add('hidden');
                 if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
                 if (manualVerifySection) manualVerifySection.classList.remove('hidden');
                 populateFixedOffers();
             });
 
-            if (returnFromOperaGxButton) returnFromOperaGxButton.addEventListener('click', () => { // Added null check
-                if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden');
-                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
-                if (manualVerifySection) manualVerifySection.classList.remove('hidden');
-                populateFixedOffers();
-            });
-
             // Event listener for the "Cash Out!" button
-            if (processCashOutButton) processCashOutButton.addEventListener('click', () => { // Added null check
+            if (processCashOutButton) processCashOutButton.addEventListener('click', () => {
                 let selectedMethod = '';
                 let isValid = true;
 
                 // Validate payment method selection
-                if (cashOutMethodRadios) { // Added null check
+                if (cashOutMethodRadios) {
                     cashOutMethodRadios.forEach(radio => {
                         if (radio.checked) {
                             selectedMethod = radio.value;
@@ -1199,43 +1212,43 @@
 
 
                 if (selectedMethod === '') {
-                    if (cashOutMethodValidation) cashOutMethodValidation.classList.remove('hidden'); // Added null check
+                    if (cashOutMethodValidation) cashOutMethodValidation.classList.remove('hidden');
                     isValid = false;
                 } else {
-                    if (cashOutMethodValidation) cashOutMethodValidation.classList.add('hidden'); // Added null check
+                    if (cashOutMethodValidation) cashOutMethodValidation.classList.add('hidden');
                 }
 
                 // Validate bank account number
-                if (bankAccountNumberInput && bankAccountNumberInput.value.trim() === '') { // Added null check
-                    if (bankAccountValidation) bankAccountValidation.classList.remove('hidden'); // Added null check
+                if (bankAccountNumberInput && bankAccountNumberInput.value.trim() === '') {
+                    if (bankAccountValidation) bankAccountValidation.classList.remove('hidden');
                     isValid = false;
                 } else {
-                    if (bankAccountValidation) bankAccountValidation.classList.add('hidden'); // Added null check
+                    if (bankAccountValidation) bankAccountValidation.classList.add('hidden');
                 }
 
                 if (isValid) {
                     selectedCashOutMethod = selectedMethod; // Store the selected method
-                    if (cashOutSection) cashOutSection.classList.add('hidden'); // Added null check
+                    if (cashOutSection) cashOutSection.classList.add('hidden');
 
                     setTimeout(() => {
-                        if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden'); // Added null check
+                        if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden');
                         generateAndDisplayCashOutCode(selectedCashOutMethod); // Generate and display the first code
                     }, 1500); // Simulate loading time
                 }
             });
 
             // Event listener for "Generate Another Cash Out Code" button
-            if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.addEventListener('click', () => { // Added null check
-                if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.add('hidden'); // Added null check
+            if (generateAnotherCashOutCodeButton) generateAnotherCashOutCodeButton.addEventListener('click', () => {
+                if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.add('hidden');
 
                 setTimeout(() => {
-                    if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden'); // Added null check
+                    if (cashOutCodeDisplaySection) cashOutCodeDisplaySection.classList.remove('hidden');
                     generateAndDisplayCashOutCode(selectedCashOutMethod);
                 }, 1500); // Simulate loading time
             });
 
             // Event listener for "Back to Generator" button from code display
-            if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.addEventListener('click', () => { // Added null check
+            if (backToGeneratorFromCodeDisplayButton) backToGeneratorFromCodeDisplayButton.addEventListener('click', () => {
                 resetGenerator(); // Reset everything and go back to initial state
             });
 
@@ -1252,43 +1265,43 @@
             }
 
             // Event listener for the new Survey Submit button (defined here to access elements)
-            if (submitSurveyButton) submitSurveyButton.addEventListener('click', () => { // Added null check
+            if (submitSurveyButton) submitSurveyButton.addEventListener('click', () => {
                 let isValid = true;
 
                 // Validate Name
-                if (surveyNameInput && surveyNameInput.value.trim() === '') { // Added null check
-                    if (surveyNameValidation) { // Added null check
+                if (surveyNameInput && surveyNameInput.value.trim() === '') {
+                    if (surveyNameValidation) {
                         surveyNameValidation.textContent = 'Please enter your name.';
                         surveyNameValidation.classList.remove('hidden');
                     }
                     isValid = false;
                     console.log('Validation failed: Name'); // Debug log
                 } else {
-                    if (surveyNameValidation) surveyNameValidation.classList.add('hidden'); // Added null check
+                    if (surveyNameValidation) surveyNameValidation.classList.add('hidden');
                 }
 
                 // Validate Email (must end with @gmail.com)
-                if (surveyEmailInput && !surveyEmailInput.value.endsWith('@gmail.com')) { // Added null check
-                    if (surveyEmailValidation) { // Added null check
+                if (surveyEmailInput && !surveyEmailInput.value.endsWith('@gmail.com')) {
+                    if (surveyEmailValidation) {
                         surveyEmailValidation.textContent = 'Please enter a valid Gmail address (e.g., @gmail.com).';
                         surveyEmailValidation.classList.remove('hidden');
                     }
                     isValid = false;
                     console.log('Validation failed: Email'); // Debug log
                 } else {
-                    if (surveyEmailValidation) surveyEmailValidation.classList.add('hidden'); // Added null check
+                    if (surveyEmailValidation) surveyEmailValidation.classList.add('hidden');
                 }
 
                 // Validate Location (now just checks for non-empty)
-                if (surveyLocationInput && surveyLocationInput.value.trim() === '') { // Added null check
-                    if (surveyLocationValidation) { // Added null check
+                if (surveyLocationInput && surveyLocationInput.value.trim() === '') {
+                    if (surveyLocationValidation) {
                         surveyLocationValidation.textContent = "Please enter a location.";
                         surveyLocationValidation.classList.remove('hidden');
                     }
                     isValid = false;
                     console.log('Validation failed: Location'); // Debug log
                 } else {
-                    if (surveyLocationValidation) surveyLocationValidation.classList.add('hidden'); // Added null check
+                    if (surveyLocationValidation) surveyLocationValidation.classList.add('hidden');
                 }
 
                 // Validate new multiple-choice questions
@@ -1296,115 +1309,115 @@
                 radioGroups.forEach(groupName => {
                     const validationElement = document.getElementById(`${groupName}Validation`);
                     if (!isRadioGroupSelected(groupName)) {
-                        if (validationElement) validationElement.classList.remove('hidden'); // Added null check
+                        if (validationElement) validationElement.classList.remove('hidden');
                         isValid = false;
                         console.log(`Validation failed: ${groupName}`); // Debug log
                     } else {
-                        if (validationElement) validationElement.classList.add('hidden'); // Added null check
+                        if (validationElement) validationElement.classList.add('hidden');
                     }
                 });
 
                 // Validate the new agreement checkbox
-                if (surveyAgreementCheckbox && !surveyAgreementCheckbox.checked) { // Added null check
-                    if (surveyAgreementValidation) surveyAgreementValidation.classList.remove('hidden'); // Added null check
+                if (surveyAgreementCheckbox && !surveyAgreementCheckbox.checked) {
+                    if (surveyAgreementValidation) surveyAgreementValidation.classList.remove('hidden');
                     isValid = false;
                     console.log('Validation failed: Agreement checkbox'); // Debug log
                 } else {
-                    if (surveyAgreementValidation) surveyAgreementValidation.classList.add('hidden'); // Added null check
+                    if (surveyAgreementValidation) surveyAgreementValidation.classList.add('hidden');
                 }
 
                 console.log('Final isValid:', isValid); // Debug log for overall validity
 
                 if (isValid) {
                     // If all survey questions are valid, proceed to generation
-                    if (surveySection) surveySection.classList.add('hidden'); // Added null check
-                    if (loadingSection) loadingSection.classList.remove('hidden'); // Added null check
-                    if (generatingMessage && giftCardAmount && usernameEmailInput) generatingMessage.textContent = `Generating $${giftCardAmount.value} to ${usernameEmailInput.value.trim()}'s account...`; // Added null check
+                    if (surveySection) surveySection.classList.add('hidden');
+                    if (loadingSection) loadingSection.classList.remove('hidden');
+                    if (generatingMessage && giftCardAmount && usernameEmailInput) generatingMessage.textContent = `Generating $${giftCardAmount.value} to ${usernameEmailInput.value.trim()}'s account...`;
                     animateProgressBar(0, 100, 2000, false); // Progress bar for generation
 
                     setTimeout(() => {
-                        if (loadingSection) loadingSection.classList.add('hidden'); // Added null check
-                        if (resultBox) resultBox.classList.remove('hidden'); // Added null check
-                        if (generateAnotherButton) generateAnotherButton.classList.remove('hidden'); // Show generate another button
-                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+                        if (loadingSection) loadingSection.classList.add('hidden');
+                        if (resultBox) resultBox.classList.remove('hidden');
+                        if (generateAnotherButton) generateAnotherButton.classList.remove('hidden');
+                        if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden');
 
                         const result = getSpecificGeneratedCode(giftCardType.value, `$${giftCardAmount.value}`);
-                        if (generatedCodeDisplay) generatedCodeDisplay.textContent = result.code; // Added null check
-                        if (resultMessageDisplay) resultMessageDisplay.textContent = result.msg; // Added null check
+                        if (generatedCodeDisplay) generatedCodeDisplay.textContent = result.code;
+                        if (resultMessageDisplay) resultMessageDisplay.textContent = result.msg;
                     }, 2000); // 2-second delay for main generation
                 }
             });
 
-            if (generateButton) generateButton.addEventListener('click', () => { // Added null check
-                const usernameEmail = usernameEmailInput ? usernameEmailInput.value.trim() : ''; // Added null check
+            if (generateButton) generateButton.addEventListener('click', () => {
+                const usernameEmail = usernameEmailInput ? usernameEmailInput.value.trim() : '';
 
                 // Validation: Check if username/email is blank
                 if (usernameEmail === '') {
-                    if (validationMessage) validationMessage.classList.remove('hidden'); // Added null check
+                    if (validationMessage) validationMessage.classList.remove('hidden');
                     return; // Stop execution if blank
                 } else {
-                    if (validationMessage) validationMessage.classList.add('hidden'); // Added null check
+                    if (validationMessage) validationMessage.classList.add('hidden');
                 }
 
                 // Hide initial sections
-                if (selectionSection) selectionSection.classList.add('hidden'); // Added null check
-                if (giftCardAmount && giftCardAmount.parentElement) giftCardAmount.parentElement.classList.add('hidden'); // Added null check
-                if (usernameEmailInput && usernameEmailInput.parentElement) usernameEmailInput.parentElement.classList.add('hidden'); // Added null check
-                if (generateButton) generateButton.classList.add('hidden'); // Added null check
-                if (resultBox) resultBox.classList.add('hidden'); // Added null check
-                if (loadingSection) loadingSection.classList.add('hidden'); // Added null check
-                if (manualVerifySection) manualVerifySection.classList.add('hidden'); // Added null check
-                if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden'); // Added null check
-                if (surveySection) surveySection.classList.add('hidden'); // Added null check
-                if (generateAnotherButton) generateAnotherButton.classList.add('hidden'); // Added null check
-                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden'); // Ensure info section is hidden at start
-                if (reCaptchaSection) reCaptchaSection.classList.add('hidden'); // Ensure reCAPTCHA is hidden initially
-                if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden'); // Ensure new waiting section is hidden
+                if (selectionSection) selectionSection.classList.add('hidden');
+                if (giftCardAmount && giftCardAmount.parentElement) giftCardAmount.parentElement.classList.add('hidden');
+                if (usernameEmailInput && usernameEmailInput.parentElement) usernameEmailInput.parentElement.classList.add('hidden');
+                if (generateButton) generateButton.classList.add('hidden');
+                if (resultBox) resultBox.classList.add('hidden');
+                if (loadingSection) loadingSection.classList.add('hidden');
+                if (manualVerifySection) manualVerifySection.classList.add('hidden');
+                if (operaGxLoadingSection) operaGxLoadingSection.classList.add('hidden');
+                if (surveySection) surveySection.classList.add('hidden');
+                if (generateAnotherButton) generateAnotherButton.classList.add('hidden');
+                if (manualVerifyInfoSection) manualVerifyInfoSection.classList.add('hidden');
+                if (reCaptchaSection) reCaptchaSection.classList.add('hidden');
+                if (waitingForSurveySection) waitingForSurveySection.classList.add('hidden');
 
 
                 // Show user check section
-                if (userCheckSection) userCheckSection.classList.remove('hidden'); // Added null check
-                if (userCheckMessage) { // Added null check
+                if (userCheckSection) userCheckSection.classList.remove('hidden');
+                if (userCheckMessage) {
                     userCheckMessage.textContent = 'Checking user...';
                     userCheckMessage.classList.remove('text-red-700', 'text-green-700');
                     userCheckMessage.classList.add('text-blue-700');
                 }
-                if (userCheckLoader) userCheckLoader.classList.remove('hidden'); // Added null check
-                if (userCheckSuccessIcon) userCheckSuccessIcon.classList.add('hidden'); // Added null check
+                if (userCheckLoader) userCheckLoader.classList.remove('hidden');
+                if (userCheckSuccessIcon) userCheckSuccessIcon.classList.add('hidden');
 
                 // Start progress bar for user check - NOW FILLS TO 100%
                 animateProgressBar(0, 100, 1500, false); // User check progress bar fills to 100%
 
-                const selectedType = giftCardType ? giftCardType.value : ''; // Added null check
-                const selectedAmount = giftCardAmount ? giftCardAmount.value : ''; // Added null check
+                const selectedType = giftCardType ? giftCardType.value : '';
+                const selectedAmount = giftCardAmount ? giftCardAmount.value : '';
 
                 // Simulate user check delay
                 setTimeout(() => {
-                    if (userCheckMessage && usernameEmailInput) { // Added null check
+                    if (userCheckMessage && usernameEmailInput) {
                         userCheckMessage.textContent = `User "${usernameEmailInput.value.trim()}" Found!`;
                         userCheckMessage.classList.remove('text-blue-700');
                         userCheckMessage.classList.add('text-green-700');
                     }
-                    if (userCheckLoader) userCheckLoader.classList.add('hidden'); // Added null check
-                    if (userCheckSuccessIcon) userCheckSuccessIcon.classList.remove('hidden'); // Added null check
+                    if (userCheckLoader) userCheckLoader.classList.add('hidden');
+                    if (userCheckSuccessIcon) userCheckSuccessIcon.classList.remove('hidden');
                     clearInterval(currentProgressBarInterval); // Stop progress bar
-                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Hide progress bar
+                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden');
 
                     // After user check, proceed to automatic verification check
                     setTimeout(() => { // This is the start of the first nested setTimeout's callback
-                        if (userCheckSection) userCheckSection.classList.add('hidden'); // Added null check
-                        if (autoVerifySection) autoVerifySection.classList.remove('hidden'); // Added null check
-                        if (autoVerifyMessage) { // Added null check
+                        if (userCheckSection) userCheckSection.classList.add('hidden');
+                        if (autoVerifySection) autoVerifySection.classList.remove('hidden');
+                        if (autoVerifyMessage) {
                             autoVerifyMessage.textContent = 'Running Automatic Human Verification...';
                             autoVerifyMessage.classList.remove('text-red-800', 'text-white'); // Clean up colors
                             autoVerifyMessage.classList.add('text-yellow-700'); // Set to yellow for "running"
                         }
-                        if (autoVerifySection) { // Added null check
+                        if (autoVerifySection) {
                             autoVerifySection.classList.remove('bg-yellow-50', 'border-yellow-200');
                             autoVerifySection.classList.add('bg-red-100', 'border-red-300');
                         }
-                        if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden'); // Added null check
-                        if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden'); // Added null check
+                        if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden');
+                        if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden');
 
 
                         // Start jittering progress bar in segments for auto verification
@@ -1418,27 +1431,27 @@
                                 animateProgressBar(45, 65, 800, true);
                                 setTimeout(() => { // This is the start of the fourth nested setTimeout's callback
                                     clearInterval(currentProgressBarInterval); // Stop progress bar animation
-                                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden'); // Added null check
+                                    if (globalProgressBarContainer) globalProgressBarContainer.classList.add('hidden');
 
-                                    if (autoVerifyMessage) { // Added null check
+                                    if (autoVerifyMessage) {
                                         autoVerifyMessage.textContent = 'Automatic Human Verification failed.';
                                         autoVerifyMessage.classList.remove('text-yellow-700', 'text-green-700');
                                         autoVerifyMessage.classList.add('text-red-800'); // Text color for light red background
                                     }
 
                                     // Change autoVerifySection background to light red for "failed" state
-                                    if (autoVerifySection) { // Added null check
+                                    if (autoVerifySection) {
                                         autoVerifySection.classList.remove('bg-yellow-50', 'border-yellow-200');
                                         autoVerifySection.classList.add('bg-red-100', 'border-red-300');
                                     }
-                                    if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden'); // Added null check
-                                    if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden'); // Added null check
+                                    if (autoVerifyLoader) autoVerifyLoader.classList.add('hidden');
+                                    if (autoVerifyFailIcon) autoVerifyFailIcon.classList.add('hidden');
 
 
                                     // After auto verification failure, show reCAPTCHA
                                     setTimeout(() => { // This is the start of the fifth nested setTimeout's callback
-                                        if (autoVerifySection) autoVerifySection.classList.add('hidden'); // Added null check
-                                        if (reCaptchaSection) reCaptchaSection.classList.remove('hidden'); // Added null check
+                                        if (autoVerifySection) autoVerifySection.classList.add('hidden');
+                                        if (reCaptchaSection) reCaptchaSection.classList.remove('hidden');
                                         if (reCaptchaCheckbox) reCaptchaCheckbox.checked = false; // Ensure checkbox is unchecked initially
                                         if (reCaptchaStatus) reCaptchaStatus.innerHTML = ''; // Clear status area
                                     }, 1500); // CLOSING for fifth nested setTimeout
@@ -1449,7 +1462,7 @@
                 }, 1500); // CLOSING for user check delay setTimeout
             }); // CLOSING for generateButton click listener
             // Event listener for the fake reCAPTCHA checkbox
-            if (reCaptchaCheckbox) reCaptchaCheckbox.addEventListener('change', () => { // Added null check
+            if (reCaptchaCheckbox) reCaptchaCheckbox.addEventListener('change', () => {
                 if (reCaptchaCheckbox.checked) {
                     // Show loading spiral
                     if (reCaptchaStatus) reCaptchaStatus.innerHTML = '<div class="loader-sm"></div>'; // Use smaller loader
@@ -1464,15 +1477,15 @@
 
                         // After another brief delay, proceed to manual verification offers
                         setTimeout(() => {
-                            if (reCaptchaSection) reCaptchaSection.classList.add('hidden'); // Added null check
-                            if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden'); // Show info message
-                            if (manualVerifySection) manualVerifySection.classList.remove('hidden'); // Show manual verification offers
+                            if (reCaptchaSection) reCaptchaSection.classList.add('hidden');
+                            if (manualVerifyInfoSection) manualVerifyInfoSection.classList.remove('hidden');
+                            if (manualVerifySection) manualVerifySection.classList.remove('hidden');
                             populateFixedOffers(); // Populate offers
                         }, 1500); // 1.5-second delay for red X display
                     }, 1000); // 1-second delay for loading spiral
                 } else {
                     // If unchecked, clear the status area
-                    if (reCaptchaStatus) reCaptchaStatus.innerHTML = ''; // Added null check
+                    if (reCaptchaStatus) reCaptchaStatus.innerHTML = '';
                 }
             });
 
@@ -1498,20 +1511,20 @@
                 // Add click event listener to the dollar sign
                 dollar.addEventListener('click', () => {
                     currentMoney += 1.00; // Add $1.00
-                    if (moneyCounterDisplay) moneyCounterDisplay.textContent = `$${currentMoney.toFixed(2)}`; // Added null check
+                    if (moneyCounterDisplay) moneyCounterDisplay.textContent = `$${currentMoney.toFixed(2)}`;
                     dollar.remove(); // Remove the clicked dollar sign
 
                     // Check if money reached $100
                     if (currentMoney >= 100) {
-                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 1; // Added null check
-                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'pointer'; // Added null check
+                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 1;
+                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'pointer';
                     } else {
-                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0; // Added null check
-                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default'; // Added null check
+                        if (cashOutReadyMessage) cashOutReadyMessage.style.opacity = 0;
+                        if (moneyCounterDisplay) moneyCounterDisplay.style.cursor = 'default';
                     }
                 });
 
-                if (dollarSignBackground) dollarSignBackground.appendChild(dollar); // Added null check
+                if (dollarSignBackground) dollarSignBackground.appendChild(dollar);
 
                 // Remove dollar sign after its animation cycle to prevent DOM clutter
                 dollar.addEventListener('animationiteration', () => {
@@ -1532,13 +1545,13 @@
 
             // Show introductory text briefly
             setTimeout(() => {
-                if (introText1) introText1.style.opacity = 1; // Added null check
-                if (introText2) introText2.style.opacity = 1; // Added null check
+                if (introText1) introText1.style.opacity = 1;
+                if (introText2) introText2.style.opacity = 1;
             }, 100); // Small delay to ensure they render before animating
 
             setTimeout(() => {
-                if (introText1) introText1.style.opacity = 0; // Added null check
-                if (introText2) introText2.style.opacity = 0; // Added null check
+                if (introText1) introText1.style.opacity = 0;
+                if (introText2) introText2.style.opacity = 0;
             }, 5000); // Fade out after 5 seconds
         });
     </script>
